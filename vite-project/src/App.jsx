@@ -6,9 +6,8 @@ import { ButtonsRow } from './components/ButtonsRow';
 import { TokenCard } from './components/TokenCard';
 import { useApprovalStatus } from './hooks/useApprovalStatus';
 import { useApproveToken } from './hooks/useApproveToken';
-import { ethers} from 'ethers';
+import { ethers, parseUnits } from 'ethers';
 import { useTokenPrices } from './hooks/useTokenPrices';
-import { parseUnits } from '@ethersproject/units';
 
 function App() {
     const { address, signer, connectWallet } = useWallet();
