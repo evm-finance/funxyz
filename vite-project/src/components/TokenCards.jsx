@@ -1,8 +1,8 @@
-import { useCryptoPrices } from "../../hooks/useCryptoPrices.js";
+import { useTokenPrices } from "../hooks/useTokenPrices.js";
 
 export function TokenCards() {
     const tokenSymbols = ["USDC", "WETH", "WBTC", "USDT"];
-    const { data, isLoading, error } = useCryptoPrices(tokenSymbols);
+    const { data, isLoading, error } = useTokenPrices(tokenSymbols);
 
     console.log('Rendering TokenCards', { isLoading, data });
 

@@ -1,7 +1,7 @@
-import { useCryptoPrices } from "../../hooks/useCryptoPrices.js";
+import { useTokenPrices } from "../hooks/useTokenPrices.js";
 
 export function CryptoPrices() {
-    const { data, isLoading, error } = useCryptoPrices();
+    const { data, isLoading, error } = useTokenPrices();
 
     if (isLoading) return <div>Loading prices...</div>;
     if (error) return <div>Error loading prices</div>;

@@ -1,28 +1,43 @@
-export function ButtonsRow() {
-    const buttons = ["USDC", "USDT", "ETH", "WBTC"];
-
+export function ButtonsRow({ tokens, selectedSymbol, onSelect }) {
     return (
         <div style={{
-            display: "flex",
-            justifyContent: "space-around",
-            padding: "1rem",
-            gap: "1rem",
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            gap: '1rem',
+            padding: '1rem'
         }}>
-            {buttons.map((label) => (
+            {tokens.map(({ symbol, logoURI }) => (
                 <button
-                    key={label}
+                    key={symbol}
+                    onClick={() => onSelect(symbol)}
                     style={{
-                        padding: "0.75rem 1.5rem",
-                        borderRadius: "12px",
-                        border: "1px solid #ccc",
-                        backgroundColor: "#f9f9f9",
-                        cursor: "pointer",
-                        fontSize: "1rem",
-                        fontWeight: "bold"
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.75rem 1rem',
+                        borderRadius: '12px',
+                        border: selectedSymbol === symbol ? '2px solid black' : '1px solid #ccc',
+                        backgroundColor: selectedSymbol === symbol ? '#e6f7ff' : '#f9f9f9',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        minWidth: '160px',
+                        justifyContent: 'flex-start',
                     }}
-                    onClick={() => console.log(`${label} clicked`)}
                 >
-                    {label}
+                    {/* Token Logo */}
+                    <img
+                        src={logoURI}
+                        alt={symbol}
+                        style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '50%',  // 👈 Makes the logo perfectly round
+                            objectFit: 'cover',
+                        }}
+                    />
+                    {/* Token Symbol */}
+                    <span style={{ fontSize: '1rem' }}>{symbol}</span>
                 </button>
             ))}
         </div>
