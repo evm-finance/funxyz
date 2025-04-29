@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { getTokenInfo, getTokenPrice } from '../src/services/fetchPrices.jsx';
+import { getTokenInfo, getTokenPrice } from '../services/fetchPrices.jsx';
 
-export function useCryptoPrices(tokenSymbols) {
+export function useTokenPrices(tokenSymbols) {
     return useQuery({
         queryKey: ['cryptoPrices', tokenSymbols],
         queryFn: async () => {
