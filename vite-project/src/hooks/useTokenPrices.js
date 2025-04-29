@@ -1,28 +1,35 @@
 import { useQuery } from '@tanstack/react-query';
-import { getTokenInfo, getTokenPrice } from '../services/fetchPrices.jsx';
+import { getAssetPriceInfo } from '@funkit/api-base';
+import { SUPPORTED_TOKENS } from '../services/constants';
 
-export function useTokenPrices(tokenSymbols) {
+export function useTokenPrices() {
     return useQuery({
-        queryKey: ['cryptoPrices', tokenSymbols],
+        queryKey: ['tokenPrices'],
         queryFn: async () => {
-            //console.log(tokenSymbols)
-            if (!tokenSymbols || tokenSymbols.length === 0) return {};
+            const prices = {};
 
-            const tokenInfos = await Promise.all(tokenSymbols.map(symbol => getTokenInfo(symbol)));
-            //console.log(tokenInfos)
-            const prices = await Promise.all(
-                tokenInfos.map(tokenInfo => getTokenPrice(tokenInfo.address))
-            );
-            //console.log("prices",prices)
+            for (const token of SUPPORTED_TOKENS) {
+                try {
+                    const result = await getAssetPriceInfo({
+                        chainId: '1',
+                        assetTokenAddress: token.address,
+                        apiKey: 'Z9SZaOwpmE40KX61mUKWm5hrpGh7WHVkaTvQJpQk', // your key
+                    });
 
+                    console.log(`${token.symbol} price result:`, result);
+                    prices[token.symbol] = result.unitPrice;
+                } catch (err) {
+                    console.error(`Error fetching ${token.symbol}:`, err);
+                    prices[token.symbol] = undefined;
+                }
+            }
 
-            const priceData = {};
-            tokenSymbols.forEach((symbol, idx) => {
-                priceData[symbol] = prices[idx].unitPrice;
-            });
-
-            return priceData;
+            console.log(prices)
+            return prices;
         },
-        refetchInterval: 10000,
+        staleTime: 60000,
+        onSuccess: () => {
+            setPriceLoaded(true);
+        },
     });
 }
