@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Web3Provider } from '@ethersproject/providers';
+import { ethers } from 'ethers';
 export function useWallet() {
     const [address, setAddress] = useState(null);
     const [provider, setProvider] = useState(null);
@@ -12,10 +12,10 @@ export function useWallet() {
                 return;
             }
 
-            const newProvider = new Web3Provider(window.ethereum);
+            const newProvider = new ethers.BrowserProvider(window.ethereum);
             const accounts = await newProvider.send("eth_requestAccounts", []);
-            const newSigner = newProvider.getSigner();
-            const newAddress = await newSigner.getAddress();
+            const newSigner = await newProvider.getSigner();
+            const newAddress = newSigner.address; // ✅
 
             setProvider(newProvider);
             setSigner(newSigner);
