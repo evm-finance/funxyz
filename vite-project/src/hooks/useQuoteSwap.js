@@ -15,7 +15,7 @@ export function useQuoteSwap(provider, inputToken, outputToken, inputAmount) {
             );
 
             const path = [inputToken.address, outputToken.address];
-            const amountIn = ethers.parseUnits(inputAmount || '0', inputToken.decimals);
+            const amountIn = ethers.parseUnits(inputAmount || '1', inputToken.decimals);
 
             const amountsOut = await router.getAmountsOut(amountIn, path);
             return ethers.formatUnits(amountsOut[1], outputToken.decimals);

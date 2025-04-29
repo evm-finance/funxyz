@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ethers, parseUnits } from 'ethers';
 import { useWallet } from './hooks/useWallet';
 import { useUniswapSwap } from './hooks/useUniswapSwap';
@@ -10,7 +10,6 @@ import { SUPPORTED_TOKENS } from './services/constants';
 import { TokenCard } from './components/TokenCard';
 import { ButtonsRow } from './components/ButtonsRow';
 
-// Default input/output tokens
 const defaultInputToken = SUPPORTED_TOKENS.find(t => t.symbol === 'WETH');
 const defaultOutputToken = SUPPORTED_TOKENS.find(t => t.symbol === 'USDC');
 
@@ -20,18 +19,51 @@ function App() {
 
     const [inputToken, setInputToken] = useState(defaultInputToken);
     const [outputToken, setOutputToken] = useState(defaultOutputToken);
-    const [inputAmount, setInputAmount] = useState('');
-    const [showTokenSelectorFor, setShowTokenSelectorFor] = useState(null);
 
-    const { data: tokenPrices, isLoading: pricesLoading } = useTokenPrices();
+    const {
+        data: tokenPrices,
+        isLoading,
+        isSuccess,
+    } = useTokenPrices();
+
+    const inputPrice = tokenPrices?.[inputToken.symbol];
+    const outputPrice = tokenPrices?.[outputToken.symbol];
+    const [inputAmount, setInputAmount] = useState('1');
+    const [showTokenSelectorFor, setShowTokenSelectorFor] = useState(null);
+    const [walletConnected, setWalletConnected] = useState(false);
+
     const { data: quotedOutputAmount } = useQuoteSwap(
         signer?.provider || null,
         inputToken,
         outputToken,
         inputAmount
     );
+
+
+
+    // Debugging
+    // console.log("tokenPrices:", tokenPrices);
+
+    const fallbackQuote = useMemo(() => {
+        if (!inputPrice || !outputPrice || !inputAmount) return '';
+        const input = parseFloat(inputAmount);
+        if (isNaN(input) || input <= 0) return '';
+        const ratio = inputPrice / outputPrice;
+        return (input * ratio).toFixed(6);
+    }, [inputPrice, outputPrice, inputAmount]);
+
     const { data: isApproved, refetch: refetchApproval } = useApprovalStatus(signer, inputToken);
     const { approve } = useApproveToken(signer);
+
+
+
+    const amountToDisplay = quotedOutputAmount || fallbackQuote || '';
+
+
+    // Debugging
+    // useEffect(() => {
+    //   console.log("amountToDisplay updated:", amountToDisplay);
+    // }, [amountToDisplay]);
 
     const handleTokenSelect = (symbol) => {
         const selectedToken = SUPPORTED_TOKENS.find(t => t.symbol === symbol);
@@ -53,17 +85,20 @@ function App() {
     };
 
     const handleSwap = async () => {
-        if (!signer) {
-            alert('Please connect your wallet.');
+        if (!signer || !quotedOutputAmount) {
+            alert('Please connect your wallet and ensure quote is ready.');
             return;
         }
+
         try {
             const deadline = Math.floor(Date.now() / 1000) + 600; // 10 min
             const amountIn = parseUnits(inputAmount || '0', inputToken.decimals);
-            const minAmountOut = expectedAmountOut * BigInt(10000 - 0.1 * 10000) / BigInt(10000);
+            const expectedAmountOut = parseUnits(quotedOutputAmount, outputToken.decimals);
+            const minAmountOut = expectedAmountOut * BigInt(10000 - 1000) / BigInt(10000); // 10% slippage
+
             await swapExactTokensForTokens({
                 amountIn,
-                amountOutMin,
+                amountOutMin: minAmountOut,
                 path: [inputToken.address, outputToken.address],
                 to: address,
                 deadline,
@@ -74,6 +109,11 @@ function App() {
             console.error(err);
             alert('Swap failed.');
         }
+    };
+
+    const handleConnectWallet = async () => {
+        await connectWallet();
+        setWalletConnected(true);
     };
 
     const handleApprove = async () => {
@@ -95,16 +135,16 @@ function App() {
         <div style={{ padding: '2rem', maxWidth: '600px', margin: 'auto' }}>
             <h2>Swap</h2>
 
-            {/* Token Selector */}
             {showTokenSelectorFor && (
                 <ButtonsRow
                     tokens={SUPPORTED_TOKENS}
-                    selectedSymbol={showTokenSelectorFor === 'input' ? inputToken.symbol : outputToken.symbol}
+                    selectedSymbol={
+                        showTokenSelectorFor === 'input' ? inputToken.symbol : outputToken.symbol
+                    }
                     onSelect={handleTokenSelect}
                 />
             )}
 
-            {/* Input Token Card */}
             <TokenCard
                 token={inputToken}
                 amount={inputAmount}
@@ -113,19 +153,17 @@ function App() {
                 price={tokenPrices?.[inputToken.symbol]}
             />
 
-            {/* Output Token Card */}
             <TokenCard
                 token={outputToken}
-                amount={quotedOutputAmount || ''}
+                amount={amountToDisplay}
                 readOnly
                 onSelectToken={() => setShowTokenSelectorFor('output')}
-                price={tokenPrices?.[outputToken.symbol]}
+                price={outputPrice}
             />
 
-            {/* Action Button */}
             <div style={{ marginTop: '1rem' }}>
                 {!signer ? (
-                    <button onClick={connectWallet}>
+                    <button onClick={handleConnectWallet}>
                         Connect Wallet
                     </button>
                 ) : inputToken.address !== '0x0000000000000000000000000000000000000000' && !isApproved ? (
